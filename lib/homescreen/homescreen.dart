@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.transparent, // Make dialog barrier transparent
       builder: (context) => HomeTutorialOverlay(
         profileRect: profileRect,
         mainCardRect: mainCardRect,
@@ -140,89 +141,107 @@ class _HomeScreenState extends State<HomeScreen> {
               key: _profileCardKey,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFFFFF), Color(0xFFF4F7FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 54,
-                    height: 54,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        'assets/images/profilhome.jpg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          );
-                        },
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFFE9EDFF),
+                    width: 1.2,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A314DFD),
+                      blurRadius: 28,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/images/profilhome.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Row(
-                          children: [
-                            Text(
-                              'Good Morning,',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF6C6C6C),
-                                fontFamily: 'Inter',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Row(
+                            children: [
+                              Text(
+                                'Good Morning',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF7A80A1),
+                                  fontFamily: 'Inter',
+                                  letterSpacing: 0.2,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              '\u{1F44B}',
-                              style: TextStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Alif Noor Rachman',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E1E1E),
+                              SizedBox(width: 4),
+                              Text(
+                                '\u{1F44B}',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 6),
+                          Text(
+                            'Alif Noor Rachman',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1C204C),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
           const SizedBox(width: 12),
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF5F7FF), Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
-              boxShadow: [
+              border: Border.all(
+                color: const Color(0xFFE9EDFF),
+                width: 1,
+              ),
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  color: Color(0x208A9CFF),
+                  blurRadius: 18,
+                  offset: Offset(0, 10),
                 ),
               ],
             ),
@@ -230,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                 Icons.notifications_none_rounded,
                 size: 24,
-                color: Colors.grey[600],
+                color: const Color(0xFF69708D),
               ),
             ),
           ),
@@ -246,11 +265,27 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF7B8CFF), Color(0xFF9BA8FF)],
+          colors: [Color(0xFFB7C6FF), Color(0xFF8DA0FF), Color(0xFF6A7BFF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: const Color(0x66FFFFFF),
+          width: 1.4,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x338A9CFF),
+            blurRadius: 38,
+            offset: Offset(0, 18),
+          ),
+          BoxShadow(
+            color: Color(0x1E3A46FF),
+            blurRadius: 18,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

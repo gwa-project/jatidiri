@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class HomeTutorialOverlay extends StatefulWidget {
@@ -22,7 +23,7 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
   int _currentStep = 0;
   final int _totalSteps = 3;
 
-  static const double _step1TooltipWidth = 217;
+  static const double _step1TooltipWidth = 280; // Diperbesar supaya text + karakter muat
   static const double _step1ArrowWidth = 20;
   static const double _horizontalMargin = 16;
   static const double _profileSpotlightPadding = 12;
@@ -108,7 +109,7 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
       left = minLeft;
     }
 
-    final double top = targetRect.bottom + 16;
+    final double top = targetRect.bottom + 24; // Lebih ke bawah supaya tidak terlalu dekat dengan profile
     final double rawArrowLeft =
         (targetRect.center.dx - left) - (_step1ArrowWidth / 2);
     final double clampedArrowLeft = rawArrowLeft
@@ -120,31 +121,32 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
       left: left,
       child: SizedBox(
         width: _step1TooltipWidth,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Padding(
-              padding: EdgeInsets.only(left: clampedArrowLeft),
+            Positioned(
+              top: -10,
+              left: clampedArrowLeft,
               child: CustomPaint(
                 size: const Size(_step1ArrowWidth, 12),
                 painter: _ArrowPainter(direction: ArrowDirection.up),
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    color: Color(0x1A000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
                   ),
                 ],
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Column(
@@ -189,15 +191,17 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Image.asset(
-                    'assets/images/homescreen-guide-1.png',
-                    width: 68,
-                    height: 68,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox.shrink();
-                    },
+                  const SizedBox(width: 16),
+                  Transform.translate(
+                    offset: const Offset(0, -79),
+                    child: Image.asset(
+                      'assets/images/homescreen-guide-1.png',
+                      width: 68,
+                      height: 68,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
+                    ),
                   ),
                 ],
               ),
@@ -213,98 +217,138 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
     final Rect targetRect = widget.mainCardRect;
     final Size screenSize = MediaQuery.of(context).size;
 
-    const double verticalSpacing = 24;
-    const double estimatedHeight = 220;
+    const double tooltipWidth = 300;
+    final double availableWidth = screenSize.width - (_horizontalMargin * 2);
+    final double bubbleWidth =
+        availableWidth < tooltipWidth ? availableWidth : tooltipWidth;
 
-    double top = targetRect.bottom + verticalSpacing;
-    if (top + estimatedHeight > screenSize.height - verticalSpacing) {
-      top = targetRect.top - estimatedHeight - verticalSpacing;
-      if (top < verticalSpacing) {
-        top = verticalSpacing;
+    double left = targetRect.center.dx - (bubbleWidth / 2);
+    final double minLeft = _horizontalMargin;
+    final double maxLeft = screenSize.width - bubbleWidth - _horizontalMargin;
+    if (maxLeft >= minLeft) {
+      left = left.clamp(minLeft, maxLeft).toDouble();
+    } else {
+      left = minLeft;
+    }
+
+    double top = targetRect.bottom + 16;
+    const double estimatedHeight = 220;
+    if (top + estimatedHeight > screenSize.height - 32) {
+      top = targetRect.top - estimatedHeight - 16;
+      if (top < 32) {
+        top = 32;
       }
     }
 
+    final double rawArrowLeft =
+        (targetRect.center.dx - left) - (_step1ArrowWidth / 2);
+    final double clampedArrowLeft = rawArrowLeft
+        .clamp(12.0, bubbleWidth - _step1ArrowWidth - 12.0)
+        .toDouble();
+
     return Positioned(
       top: top,
-      left: _horizontalMargin,
-      right: _horizontalMargin,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8B8BFF), Color(0xFFB8B8FF)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
+      left: left,
+      child: SizedBox(
+        width: bubbleWidth,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Siap Cari Tahu Siapa Dirimu?',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Yuk, ikuti tes psikologi dan temukan potensimu.',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: Colors.white,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '2 of $_totalSteps',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _nextStep,
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+            Positioned(
+              top: -10,
+              left: clampedArrowLeft,
+              child: CustomPaint(
+                size: const Size(_step1ArrowWidth, 12),
+                painter: _ArrowPainter(direction: ArrowDirection.up),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF9EAFFF), Color(0xFF7B8EFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Image.asset(
-              'assets/images/survei.png',
-              width: 80,
-              height: 80,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.person_outline,
-                  size: 60,
-                  color: Colors.white,
-                );
-              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Siap Cari Tahu Siapa Dirimu?',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Yuk, ikuti tes psikologi dan temukan potensimu.',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: Color(0xFFE5E8FF),
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '2 of $_totalSteps',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                color: Color(0xFFE0E5FF),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _nextStep,
+                              child: const Text(
+                                'Next',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Transform.translate(
+                    offset: const Offset(0, -18),
+                    child: Image.asset(
+                      'assets/images/homescreen-guide-2.png',
+                      width: 88,
+                      height: 88,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -435,7 +479,7 @@ class _SpotlightPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Background gelap
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.7)
+      ..color = Colors.black.withOpacity(0.45)
       ..style = PaintingStyle.fill;
 
     // Path untuk background penuh
@@ -458,14 +502,29 @@ class _SpotlightPainter extends CustomPainter {
       spotlightPath,
     );
 
-    // Draw background gelap dengan hole
+    // Draw background gelap dengan hole (area spotlight transparan 100%)
     canvas.drawPath(finalPath, backgroundPaint);
+
+    // Soft glow around spotlight
+    final glowPaint = Paint()
+      ..color = Colors.white.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.outer, 24);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        spotlightRect.inflate(6),
+        Radius.circular(borderRadius + 6),
+      ),
+      glowPaint,
+    );
 
     // Draw border di sekitar spotlight (optional, untuk emphasis)
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
+      ..color = const Color(0xCCFFFFFF)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 3;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
