@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 
 class HomeTutorialOverlay extends StatefulWidget {
   final VoidCallback onComplete;
+  final Rect profileRect;
+  final Rect mainCardRect;
+  final Rect bottomNavRect;
 
   const HomeTutorialOverlay({
     super.key,
     required this.onComplete,
+    required this.profileRect,
+    required this.mainCardRect,
+    required this.bottomNavRect,
   });
 
   @override
@@ -16,26 +22,13 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
   int _currentStep = 0;
   final int _totalSteps = 3;
 
-  // 🎨 PENGATURAN POSISI - Ubah nilai ini untuk menyesuaikan posisi tooltip
-  // Step 1 - Profile Tooltip (pojok kanan atas)
-  static const double step1Top = 80;      // Jarak dari atas (makin besar = makin bawah)
-  static const double step1Right = 20;    // Jarak dari kanan (makin besar = makin kiri)
-  static const double step1Width = 200;   // Lebar tooltip
-
-  // Step 2 - Main Card Bubble (tengah layar)
-  static const double step2Top = 180;     // Jarak dari atas (makin besar = makin bawah)
-  static const double step2Left = 16;     // Jarak dari kiri
-  static const double step2Right = 16;    // Jarak dari kanan
-
-  // Step 3 - Bottom Navigation Popup
-  static const double step3Bottom = 120;  // Jarak dari bawah (makin besar = makin atas)
-  static const double step3WidthPercent = 0.8; // 80% dari lebar layar
-
-  // Spotlight Area untuk Step 1 (Area Profile + Nama)
-  static const double spotlightLeft = 10;   // Jarak dari kiri
-  static const double spotlightTop = 20;    // Jarak dari atas (SafeArea top + 20px padding)
-  static const double spotlightWidth = 190; // Lebar area terang (profile + nama + good morning)
-  static const double spotlightHeight = 60; // Tinggi area terang
+  static const double _step1TooltipWidth = 217;
+  static const double _step1ArrowWidth = 20;
+  static const double _horizontalMargin = 16;
+  static const double _profileSpotlightPadding = 12;
+  static const double _mainCardSpotlightPadding = 20;
+  static const double _bottomNavSpotlightPadding = 16;
+  static const double _step3WidthPercent = 0.8;
 
   void _nextStep() {
     if (_currentStep < _totalSteps - 1) {
@@ -47,24 +40,45 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
     }
   }
 
+  Rect? _spotlightForCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        return widget.profileRect.inflate(_profileSpotlightPadding);
+      case 1:
+        return widget.mainCardRect.inflate(_mainCardSpotlightPadding);
+      case 2:
+        return widget.bottomNavRect.inflate(_bottomNavSpotlightPadding);
+      default:
+        return null;
+    }
+  }
+
+  double _spotlightRadiusForCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        return 20;
+      case 1:
+        return 24;
+      case 2:
+        return 30;
+      default:
+        return 16;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final Rect? spotlightRect = _spotlightForCurrentStep();
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Dark backdrop with cutout for spotlight
-          if (_currentStep == 0)
+          if (spotlightRect != null)
             CustomPaint(
               size: MediaQuery.of(context).size,
               painter: _SpotlightPainter(
-                spotlightRect: Rect.fromLTWH(
-                  spotlightLeft,
-                  spotlightTop,
-                  spotlightWidth,
-                  spotlightHeight,
-                ),
-                borderRadius: 12,
+                spotlightRect: spotlightRect,
+                borderRadius: _spotlightRadiusForCurrentStep(),
               ),
             )
           else
@@ -81,250 +95,290 @@ class _HomeTutorialOverlayState extends State<HomeTutorialOverlay> {
 
   // Step 1: Profile Guide
   Widget _buildStep1() {
+    final Rect targetRect = widget.profileRect;
+    final Size screenSize = MediaQuery.of(context).size;
+
+    final double minLeft = _horizontalMargin;
+    final double maxLeft =
+        screenSize.width - _step1TooltipWidth - _horizontalMargin;
+    double left = targetRect.center.dx - (_step1TooltipWidth / 2);
+    if (maxLeft >= minLeft) {
+      left = left.clamp(minLeft, maxLeft).toDouble();
+    } else {
+      left = minLeft;
+    }
+
+    final double top = targetRect.bottom + 16;
+    final double rawArrowLeft =
+        (targetRect.center.dx - left) - (_step1ArrowWidth / 2);
+    final double clampedArrowLeft = rawArrowLeft
+        .clamp(12.0, _step1TooltipWidth - _step1ArrowWidth - 12.0)
+        .toDouble();
+
     return Positioned(
-      top: step1Top,
-      right: step1Right,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Character illustration (ilustrasi karakter)
-          Image.asset(
-            'assets/images/homescreen-guide-1.png',
-            width: 120,
-            height: 120,
-            errorBuilder: (context, error, stackTrace) {
-              return const SizedBox(width: 120, height: 120); // Placeholder jika error
-            },
-          ),
-          const SizedBox(height: 8),
-          // Arrow pointing up (di atas tooltip, mengarah ke nama)
-          Padding(
-            padding: const EdgeInsets.only(right: 140), // Lebih ke kiri untuk mengarah ke nama
-            child: CustomPaint(
-              size: const Size(20, 10),
-              painter: _ArrowPainter(direction: ArrowDirection.up),
+      top: top,
+      left: left,
+      child: SizedBox(
+        width: _step1TooltipWidth,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: clampedArrowLeft),
+              child: CustomPaint(
+                size: const Size(_step1ArrowWidth, 12),
+                painter: _ArrowPainter(direction: ArrowDirection.up),
+              ),
             ),
-          ),
-          // Tooltip bubble
-          Container(
-            width: step1Width,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Klik fotomu di atas buat atur info diri.',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                    height: 1.4,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '1 of $_totalSteps',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        color: Colors.black45,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _nextStep,
-                      child: const Text(
-                        'Next',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF6464FA),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Klik fotomu di atas buat atur info diri.',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '1 of $_totalSteps',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                color: Colors.black45,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _nextStep,
+                              child: const Text(
+                                'Next',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6464FA),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(width: 12),
+                  Image.asset(
+                    'assets/images/homescreen-guide-1.png',
+                    width: 68,
+                    height: 68,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // Step 2: Main Card Guide
   Widget _buildStep2() {
+    final Rect targetRect = widget.mainCardRect;
+    final Size screenSize = MediaQuery.of(context).size;
+
+    const double verticalSpacing = 24;
+    const double estimatedHeight = 220;
+
+    double top = targetRect.bottom + verticalSpacing;
+    if (top + estimatedHeight > screenSize.height - verticalSpacing) {
+      top = targetRect.top - estimatedHeight - verticalSpacing;
+      if (top < verticalSpacing) {
+        top = verticalSpacing;
+      }
+    }
+
     return Positioned(
-      top: step2Top,
-      left: step2Left,
-      right: step2Right,
-      child: Column(
-        children: [
-          // Gradient bubble with character
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF8B8BFF), Color(0xFFB8B8FF)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      top: top,
+      left: _horizontalMargin,
+      right: _horizontalMargin,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8B8BFF), Color(0xFFB8B8FF)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Siap Cari Tahu Siapa Dirimu?',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Yuk, ikuti tes psikologi dan temukan potensimu.',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      color: Colors.white,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Siap Cari Tahu Siapa Dirimu?',
-                        style: TextStyle(
+                      Text(
+                        '2 of $_totalSteps',
+                        style: const TextStyle(
                           fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          height: 1.3,
+                          fontSize: 11,
+                          color: Colors.white70,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Yuk, ikuti tes psikologi dan temukan potensimu.',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          color: Colors.white,
-                          height: 1.4,
+                      GestureDetector(
+                        onTap: _nextStep,
+                        child: const Text(
+                          'Next',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '2 of $_totalSteps',
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: _nextStep,
-                            child: const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                // Character illustration
-                Image.asset(
-                  'assets/images/survei.png',
-                  width: 80,
-                  height: 80,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.person_outline,
-                      size: 60,
-                      color: Colors.white,
-                    );
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Image.asset(
+              'assets/images/survei.png',
+              width: 80,
+              height: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.person_outline,
+                  size: 60,
+                  color: Colors.white,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // Step 3: Bottom Navigation Guide
   Widget _buildStep3() {
+    final Rect targetRect = widget.bottomNavRect;
+    final Size screenSize = MediaQuery.of(context).size;
+
+    final double distanceFromBottom = screenSize.height - targetRect.top;
+    final double bottomOffset = distanceFromBottom + 80;
+    final double horizontalInset =
+        screenSize.width * (1 - _step3WidthPercent) / 2;
+
     return Positioned(
-      bottom: step3Bottom,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width * step3WidthPercent,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+      bottom: bottomOffset,
+      left: horizontalInset,
+      right: horizontalInset,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'Cek Bagaimana Hasil Tesmu Disini!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                height: 1.4,
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              const Text(
-                'Cek Bagaimana Hasil Tesmu Disini!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  height: 1.4,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '3 of $_totalSteps',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: Colors.black45,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '3 of $_totalSteps',
-                    style: const TextStyle(
+                GestureDetector(
+                  onTap: _nextStep,
+                  child: const Text(
+                    'Finished',
+                    style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 11,
-                      color: Colors.black45,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF6464FA),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _nextStep,
-                    child: const Text(
-                      'Finished',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF6464FA),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

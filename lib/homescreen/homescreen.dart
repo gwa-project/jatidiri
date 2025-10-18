@@ -17,6 +17,10 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   int _currentNavIndex = 0;
+  final GlobalKey _profileCardKey = GlobalKey();
+  final GlobalKey _mainCardKey = GlobalKey();
+  final GlobalKey _bottomNavKey = GlobalKey();
+  bool _tutorialShown = false;
 
   @override
   void initState() {
@@ -28,10 +32,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showHomeTutorial() {
+    if (_tutorialShown) {
+      return;
+    }
+
+    final Rect? profileRect = _getWidgetBounds(_profileCardKey);
+    final Rect? mainCardRect = _getWidgetBounds(_mainCardKey);
+    final Rect? bottomNavRect = _getWidgetBounds(_bottomNavKey);
+
+    if (profileRect == null || mainCardRect == null || bottomNavRect == null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _showHomeTutorial();
+      });
+      return;
+    }
+
+    _tutorialShown = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => HomeTutorialOverlay(
+        profileRect: profileRect,
+        mainCardRect: mainCardRect,
+        bottomNavRect: bottomNavRect,
         onComplete: () {
           Navigator.of(context).pop();
         },
@@ -49,7 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
               _buildHeader(),
               const SizedBox(height: 20),
               _buildMainCard(),
@@ -65,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
+        key: _bottomNavKey,
         currentIndex: _currentNavIndex,
         onTap: (index) {
           setState(() {
@@ -106,54 +133,103 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.grey[300],
-            backgroundImage: const AssetImage('assets/images/profilhome.jpg'),
-            onBackgroundImageError: (exception, stackTrace) {},
-            child: const Icon(Icons.person, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Row(
-                  children: [
-                    Text(
-                      'Good Morning, ',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
+            child: Container(
+              key: _profileCardKey,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/images/profilhome.jpg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    Text('👋', style: TextStyle(fontSize: 13)),
-                  ],
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Alif Noor Rachman',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Row(
+                          children: [
+                            Text(
+                              'Good Morning,',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6C6C6C),
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '\u{1F44B}',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Alif Noor Rachman',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E1E1E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
             child: Center(
               child: Icon(
-                Icons.notifications,
-                size: 22,
+                Icons.notifications_none_rounded,
+                size: 24,
                 color: Colors.grey[600],
               ),
             ),
@@ -163,101 +239,102 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
- Widget _buildMainCard() {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF7B8CFF), Color(0xFF9BA8FF)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  Widget _buildMainCard() {
+    return Container(
+      key: _mainCardKey,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7B8CFF), Color(0xFF9BA8FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
       ),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Row untuk teks (seperti sebelumnya)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Siap Cari Tahu Siapa Dirimu?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row untuk teks (seperti sebelumnya)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Siap Cari Tahu Siapa Dirimu?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Yuk, ikuti tes psikologi dan temukan potensimu.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      height: 1.4,
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Yuk, ikuti tes psikologi dan temukan potensimu.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16), // Jarak sebelum gambar baru
+
+          // Tambahkan gambar baru (survei.png) di bawah, dekat garis border
+          // Saya taruh di bawah gambar lama untuk menghindari overlap, tapi Anda bisa sesuaikan
+          Align(
+            alignment: Alignment.bottomRight, // Dekat garis border kanan bawah
+            child: SizedBox(
+              width: 110, // Ukuran yang Anda tentukan
+              height: 110,
+              child: Image.asset(
+                'assets/images/survei.png',
+                fit: BoxFit
+                    .contain, // Perbaiki dari 'fit: ,' menjadi 'fit: BoxFit.contain'
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildCharacterPlaceholder();
+                },
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 16),  // Jarak sebelum gambar baru
-        
-        
-        // Tambahkan gambar baru (survei.png) di bawah, dekat garis border
-        // Saya taruh di bawah gambar lama untuk menghindari overlap, tapi Anda bisa sesuaikan
-        Align(
-          alignment: Alignment.bottomRight,  // Dekat garis border kanan bawah
-          child: SizedBox(
-            width: 110,  // Ukuran yang Anda tentukan
-            height: 110,
-            child: Image.asset(
-              'assets/images/survei.png',
-              fit: BoxFit.contain,  // Perbaiki dari 'fit: ,' menjadi 'fit: BoxFit.contain'
-              errorBuilder: (context, error, stackTrace) {
-                return _buildCharacterPlaceholder();
-              },
+          ),
+
+          const SizedBox(height: 16), // Jarak sebelum tombol
+          ElevatedButton(
+            onPressed: () {
+              print('Coba Sekarang clicked');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF7B8CFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 28,
+                vertical: 12,
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Coba Sekarang',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        
-        const SizedBox(height: 16),  // Jarak sebelum tombol
-        ElevatedButton(
-          onPressed: () {
-            print('Coba Sekarang clicked');
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF7B8CFF),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 28,
-              vertical: 12,
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Coba Sekarang',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   Widget _buildCharacterPlaceholder() {
     return Container(
@@ -292,7 +369,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildPackageCard(
             color: const Color(0xFFE89B6D),
             title: 'Jatidiri Universitas',
-            description: 'Membantu menciptakan ekosistem pendidikan yang menguatkan mental, karakter, dan potensi mahasiswa.',
+            description:
+                'Membantu menciptakan ekosistem pendidikan yang menguatkan mental, karakter, dan potensi mahasiswa.',
             image: 'assets/images/cardunivhome.png',
           ),
           // Temporarily commented out - images not available yet
@@ -459,6 +537,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Rect? _getWidgetBounds(GlobalKey key) {
+    final BuildContext? targetContext = key.currentContext;
+    if (targetContext == null) {
+      return null;
+    }
+
+    final RenderObject? renderObject = targetContext.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return null;
+    }
+
+    final Offset offset = renderObject.localToGlobal(Offset.zero);
+    return offset & renderObject.size;
   }
 
   @override
